@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상대방의 감정을 이해할 수 있는 감정 파악 시스템</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Noto Sans KR for professional, clean flat tone -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Apply solid, professional Noto Sans KR to entire webpage */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #ffffff;
+            color: #172554; /* Default Navy Base Font Color */
+        }
+        /* Custom scrollbar - soft & rounded blue */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #ffffff;
+            border-radius: 100px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bae6fd;
+            border-radius: 100px;
+            border: 2px solid #ffffff;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7dd3fc;
+        }
+        /* Keep transition styles but make them look flat & premium */
+        .flat-interactive-card {
+            transition: all 0.2s ease-in-out;
+            border: 3px solid #e0f2fe;
+            background: #ffffff;
+        }
+        .flat-interactive-card:hover {
+            transform: translateY(-4px);
+            border-color: #38bdf8;
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased pb-12 relative overflow-x-hidden text-blue-950">
+
+    <!-- Header Navigation in Blue/White -->
+    <nav class="sticky top-0 z-50 bg-white shadow-sm mb-6 rounded-b-[40px] px-2 sm:px-6 border-b-4 border-sky-100">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between h-auto sm:h-20 items-center py-4 sm:py-0 gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-500 p-2.5 rounded-2xl text-white shadow-md">
+                        <i class="fa-solid fa-comments text-2xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl tracking-tight text-blue-600 block">속마음 디코더</span>
+                        <span class="text-xs block text-sky-600 font-bold -mt-1">우리 사이 오해를 지워주는 소통 공간</span>
+                    </div>
+                </div>
+                <!-- Tabs with soft sky colors -->
+                <div class="flex space-x-2 bg-sky-50 p-1.5 rounded-2xl text-sm font-bold border-2 border-sky-100">
+                    <button onclick="switchTab('dictionary')" id="tab-dictionary" class="tab-btn px-5 py-2.5 rounded-xl bg-white text-blue-600 shadow-sm transition-all duration-300 text-lg font-bold">
+                        <i class="fa-solid fa-heart-crack mr-1.5 text-sky-400"></i>감정 분류 도감
+                    </button>
+                    <button onclick="switchTab('translator')" id="tab-translator" class="tab-btn px-5 py-2.5 rounded-xl text-blue-900/60 hover:text-blue-600 transition-all duration-300 text-lg font-bold">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-blue-400"></i>AI 감정 번역기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        <!-- Welcome Hero Banner -->
+        <header class="text-center mb-8 mt-4 max-w-3xl mx-auto">
+            <span class="px-4 py-1.5 bg-blue-100 text-blue-600 rounded-full text-xs font-black tracking-wider mb-3 inline-block shadow-sm">Blue & White Mind Space</span>
+            <h1 class="text-3xl sm:text-4xl font-black text-blue-950 tracking-tight leading-none mb-3">
+                상대방의 속마음을 명확하게 풀이하는<br>
+                <span class="text-blue-600">감정 파악 도우미</span>
+            </h1>
+            <p class="text-blue-900/80 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto font-medium">
+                겉으로는 괜찮아 보이는 이모티콘 뒤에 실은 서운함과 오해가 숨어있을 수 있어요.<br>
+                맑은 7가지 감정 분류를 살포시 눌러 꼬인 마음에 진솔한 소통을 전달해 봐요! 🗺️
+            </p>
+        </header>
+
+        <!-- Custom Notification Toast Box instead of alert() -->
+        <div id="toast-message" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-blue-600 text-white font-bold text-xs py-3.5 px-6 rounded-2xl shadow-xl flex items-center gap-2 pointer-events-none border-2 border-white">
+            <span id="toast-icon" class="text-white"></span>
+            <span id="toast-text">알림 메세지</span>
+        </div>
+
+        <!-- TAB 1: EMOTION DICTIONARY BY SPECIFIC CATEGORIES -->
+        <section id="section-dictionary" class="tab-content block">
+            <div class="mb-6 text-center sm:text-left">
+                <h2 class="text-2xl font-black text-blue-950 flex items-center justify-center sm:justify-start gap-2">
+                    <span class="w-2.5 h-6 bg-blue-500 rounded-full"></span>
+                    7가지 핵심 감정 분류
+                </h2>
+                <p class="text-xs text-blue-900/70 mt-1 font-bold">상대가 표현한 이모티콘 아래 감춰진 진짜 마음을 찾기 위해 버튼을 살포시 터치해 보세요.</p>
+            </div>
+
+            <!-- 7 Emotion Cards Layout (Blue/White Design with Custom Emotion Colors) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8" id="emotion-grid">
+                
+                <!-- Category 1: 행복,기쁨 -->
+                <div onclick="openEmotionCategory('happy-joy')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">기쁨</span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">😊</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-amber-500">행복,기쁨</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">자세히 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+
+                <!-- Category 2: 사랑 -->
+                <div onclick="openEmotionCategory('love')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">사랑</span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">❤️</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-rose-500">사랑</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">자세히 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+
+                <!-- Category 3: 슬픔 -->
+                <div id="card-sadness" onclick="openEmotionCategory('sadness')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36 ring-4 ring-sky-300">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-sky-700 bg-sky-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+                            슬퍼요 <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping inline-block"></span>
+                        </span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">😢</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-sky-600">슬픔</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">대표분석 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+
+                <!-- Category 4: 분노 -->
+                <div onclick="openEmotionCategory('anger')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-red-700 bg-red-50 px-2.5 py-1 rounded-full">화남</span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">😠</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-red-600">분노</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">자세히 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+
+                <!-- Category 5: 두려움,좌절 -->
+                <div onclick="openEmotionCategory('fear-frustration')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full">조마조마</span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">😰</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-indigo-600">두려움,좌절</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">자세히 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+
+                <!-- Category 6: 부끄러움 -->
+                <div onclick="openEmotionCategory('shame')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">조심스러움</span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">😳</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-emerald-500">부끄러움</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">자세히 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+
+                <!-- Category 7: 기타 -->
+                <div onclick="openEmotionCategory('others')" class="flat-interactive-card rounded-3xl p-5 cursor-pointer hover:bg-sky-50 flex flex-col justify-between h-36">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-black text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">그 외 마음</span>
+                        <span class="text-3xl hover:scale-115 transition-transform duration-200">💬</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold mt-2 text-slate-500">기타</h3>
+                    </div>
+                    <span class="text-xs text-blue-600 font-bold mt-2">자세히 보기 <i class="fa-solid fa-chevron-right ml-0.5"></i></span>
+                </div>
+            </div>
+
+            <!-- Emotion Detail Panel -->
+            <div id="emotion-detail-panel" class="bg-white rounded-[40px] p-6 sm:p-8 shadow-xl border-4 border-sky-100 hidden relative">
+                <div class="flex justify-between items-center mb-6 border-b-2 border-dashed border-sky-100 pb-5">
+                    <div class="flex items-center gap-4">
+                        <div id="detail-icon" class="text-5xl bg-sky-50 p-3.5 rounded-[24px] shadow-inner border border-sky-100"></div>
+                        <div>
+                            <h3 id="detail-category-name" class="text-2xl sm:text-3xl font-black text-blue-950 mt-1"></h3>
+                        </div>
+                    </div>
+                    <button onclick="closeEmotionDetail()" class="text-blue-900/50 hover:text-blue-950 p-2.5 hover:bg-slate-100 rounded-full transition-all">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Interactive Diagnostic Board -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left: Graphic Summary Box -->
+                    <div class="lg:col-span-5 bg-sky-50/50 rounded-[30px] p-5 border-2 border-sky-100 flex flex-col justify-between space-y-4">
+                        <!-- Emotion Discordance Diagram -->
+                        <div class="bg-white rounded-2xl p-4 border-2 border-sky-100 shadow-sm">
+                            <span class="text-sm font-black text-blue-600 block mb-3">🔀 마음의 전송 필터 흐름</span>
+                            <div class="flex justify-between items-center bg-sky-50/30 p-4 rounded-xl text-center border border-sky-100">
+                                <div class="flex flex-col items-center">
+                                    <span class="text-4xl hover:scale-115 transition-transform duration-200" id="flow-real-emoji">😡</span>
+                                    <span class="text-xs font-black text-blue-900 mt-1.5">진짜 내면</span>
+                                </div>
+                                <div class="flex-1 px-2 flex flex-col items-center">
+                                    <span class="text-xs text-sky-600 font-bold animate-pulse"><i class="fa-solid fa-shield"></i> 자아 필터 거침</span>
+                                    <div class="w-full flex items-center justify-center gap-1 mt-1.5">
+                                        <span class="h-2 w-2 bg-sky-400 rounded-full animate-ping"></span>
+                                        <span class="h-1.5 w-12 bg-sky-100 rounded-full"></span>
+                                        <span class="text-sky-400"><i class="fa-solid fa-angles-right"></i></span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <span class="text-4xl hover:scale-115 transition-transform duration-200" id="flow-fake-emoji">😢</span>
+                                    <span class="text-xs font-black text-blue-900 mt-1.5">포장된 겉표현</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-blue-950 flex items-center gap-2 font-bold">
+                            <i class="fa-solid fa-circle-info text-sky-500 text-lg"></i>
+                            <span>우리가 서툰 방어 자아 필터를 사용해 소통했음을 의미해요!</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Deep Analysis Text Areas -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <!-- 1. Why this emoticon? Reason Analysis -->
+                        <div class="bg-blue-50/30 p-5 rounded-[30px] border-2 border-blue-100 shadow-sm">
+                            <h4 class="text-lg font-black text-blue-950 flex items-center gap-2 mb-3">
+                                <span class="bg-blue-100 p-1.5 rounded-xl text-lg">🧠</span>
+                                왜 이런 이모티콘을 썼을까요? (속마음의 비밀)
+                            </h4>
+                            <div id="analysis-text" class="text-sm text-blue-900 leading-relaxed space-y-2 font-medium">
+                                <!-- Inject -->
+                            </div>
+                        </div>
+
+                        <!-- 2. Safe Communication Guide -->
+                        <div class="bg-sky-50/40 p-5 rounded-[30px] border-2 border-sky-200 shadow-sm">
+                            <h4 class="text-lg font-black text-blue-950 flex items-center gap-2 mb-3">
+                                <span class="bg-sky-100 p-1.5 rounded-xl text-lg">💬</span>
+                                오해 없이 대화하는 솔루션 가이드
+                            </h4>
+                            <div id="guide-text" class="text-sm text-blue-900 leading-relaxed space-y-3 font-medium">
+                                <!-- Inject -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: REALTIME AI EMOTION TRANSLATOR -->
+        <section id="section-translator" class="tab-content hidden">
+            <div class="bg-white rounded-[40px] p-6 sm:p-8 shadow-xl border-4 border-sky-100 relative">
+                <div class="max-w-3xl mx-auto text-center mb-6">
+                    <span class="px-4 py-1.5 bg-sky-100 text-blue-600 rounded-full text-xs font-black inline-block shadow-sm">AI Deep-Learning Analysis</span>
+                    <h2 class="text-2xl sm:text-3xl font-black text-blue-950 mt-2 mb-1">실시간 AI 감정 번역기</h2>
+                    <p class="text-blue-900/70 text-xs sm:text-sm font-bold">오해가 발생한 카톡 갈등 상황을 고르고, 실제 전달된 표현과 속에 담긴 진짜 마음을 적어주세요. 사진(캡처본)을 추가 제한 없이 여러 장 첨부하여 더욱 확실하게 번역할 수도 있습니다! 📸</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Left Form Panel -->
+                    <div class="lg:col-span-5 bg-sky-50/30 rounded-[30px] p-5 border-2 border-sky-100 space-y-4">
+                        
+                        <!-- Situation Preset Selector Dropdown -->
+                        <div class="space-y-2">
+                            <label for="situation-select" class="block font-black text-blue-950 text-sm flex items-center gap-1">
+                                <span>📋</span> 일어난 상황 선택
+                            </label>
+                            <select id="situation-select" onchange="onSituationSelectChange(this.value)" class="w-full px-4 py-2.5 rounded-2xl border-2 border-sky-100 focus:ring-4 focus:ring-sky-400/20 focus:border-sky-400 outline-none transition-all text-blue-950 text-xs font-bold bg-white cursor-pointer">
+                                <option value="custom" selected>✏️ 직접 입력 (기타)</option>
+                                <optgroup label="😊 행복 / 기쁨">
+                                    <option value="친구한테 사소하고 예쁜 칭찬을 받았을 때 너무 신나고 행복함">친구에게 칭찬을 받았을 때 칭찬에 몸둘 바 모를 때</option>
+                                    <option value="지긋지긋한 학원 수업이 완전히 끝나고 자유롭게 가방 챙겨 문을 나설 때">지긋지긋한 학원 수업이 끝났을 때</option>
+                                    <option value="진짜 맛있는 명품 떡볶이와 간식을 푸짐하게 먹어 행복감이 충전될 때">맛있는 거 먹을 때</option>
+                                    <option value="집에서 대자로 드러누워 가장 기분 좋은 방해 없는 해방 상태로 푹 쉴 때">집에서 쉴 때</option>
+                                </optgroup>
+                                <optgroup label="😢 슬픔">
+                                    <option value="열심히 공부한 시험 결과 점수를 보고 충격을 받아 눈물이 앞을 가릴 때">시험을 망쳤을 때</option>
+                                    <option value="나의 자잘한 잘못으로 상대에게 상처나 불편을 주어 미안해 정중하게 사과하고 싶을 때">미안해서 정중히 사과할 때</option>
+                                    <option value="친구한테 장난을 쳤는데 친구가 정색하며 반응을 거부해서 홀로 섭섭하고 무안해졌을 때">친구가 나의 소중한 장난을 거부했을 때</option>
+                                </optgroup>
+                                <optgroup label="😰 두려움 / 좌절">
+                                    <option value="시험을 다 보고 점수 결과를 조마조마하게 대기하며 혼날까봐 긴장되고 겁날 때">시험 보고 난 뒤 결과를 기다리며 걱정될 때</option>
+                                    <option value="부모님께 무언가 원하는 일이나 챙김을 거절 불안을 참으며 어렵게 부탁드릴 때">부모님께 무언가 조심스럽게 부탁드릴 때</option>
+                                    <option value="일진이 사납고 안 좋은 돌발 사건이 터져 혼자 해결하기 벅차 우울하고 힘들 때">안 좋은 일이 겹쳐 정신적으로 힘들 때</option>
+                                </optgroup>
+                                <optgroup label="😳 부끄러움">
+                                    <option value="정말 처음 만나는 초면의 낯선 사람과 함께 자리에 남아 분위기 있게 연락할 때">초면인 사람과 단둘이 어색하게 대화할 때</option>
+                                    <option value="갑작스러운 친구의 뜨거운 극찬이나 오구오구 챙김에 얼굴이 붉어지며 기쁠 때">친구에게 진심 어린 칭찬을 전해 받았을 때</option>
+                                    <option value="귀여운 말투나 사랑받고 싶은 가벼운 마음을 부끄럽게 연출해 보고 싶을 때">상대방에게 좀 더 귀여워 보이고 싶을 때</option>
+                                </optgroup>
+                                <optgroup label="😡 분노">
+                                    <option value="상대방의 무책임한 과실 때문에 엄청나게 짜증이 폭발하고 화가 치솟을 때">나에게 엄청나게 화나거나 짜증이 차오를 때</option>
+                                </optgroup>
+                                <optgroup label="💕 사랑">
+                                    <option value="늘 든든히 날 지지해 주시는 부모님께 수줍은 애정을 전하려고 통화나 톡을 할 때">부모님께 숨은 애정을 전하고 연락할 때</option>
+                                    <option value="연인과 소통하며 달콤하고 정성 어린 사랑의 안정을 주고받고 싶을 때">연인과 연락하며 달달한 사랑을 표현할 때</option>
+                                    <option value="말은 쑥스러워 안 해도 세상 둘도 없는 든든한 친구랑 나란히 곁에 머물 때">소중한 친구랑 있을 때 사랑을 표하고 싶을 때</option>
+                                </optgroup>
+                                <optgroup label="💬 기타">
+                                    <option value="진심 어린 배려를 준 상대에게 아주 깊이 고마운 마음이 들 때">고마운 도움을 받았을 때</option>
+                                    <option value="별것 아닌 사소한 실수로 눈치 보이거나 미안한 감정이 작게 스며들 때">약속 시간이나 지각으로 사소하게 미안할 때</option>
+                                    <option value="놀라운 비주얼이나 기막힌 소식에 턱이 빠질 정도로 크게 깜짝 놀랐을 때">상황에 크게 기겁하거나 깜짝 놀랐을 때</option>
+                                    <option value="친구의 개그 욕심이나 엉뚱한 리액션에 대박 웃음이 터졌을 때">대화방 수다 중 유쾌하고 재미나게 웃길 때</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- Photo Upload Section (Unlimited, Multiple selection) -->
+                        <div class="space-y-2">
+                            <span class="block text-sm font-black text-blue-950">📸 대화방 사진 첨부 (다중/무제한 첨부 가능)</span>
+                            <p class="text-xs text-blue-900/70 font-bold">오해가 생긴 갈등방 캡처본을 여러 장 자유롭게 첨부해 보세요. 파일 용량이나 개수 제한이 없어 여러 개를 한 번에 업로드할 수 있습니다!</p>
+                            
+                            <!-- Custom drag-drop upload area -->
+                            <div onclick="document.getElementById('image-upload').click()" class="border-3 border-dashed border-sky-200 hover:border-sky-400 bg-white hover:bg-sky-50/40 p-4 rounded-2xl cursor-pointer text-center transition-all duration-200 relative group" id="upload-box">
+                                <input type="file" id="image-upload" class="hidden" multiple onchange="handleImageSelect(event)">
+                                <div id="upload-prompt" class="space-y-2">
+                                    <i class="fa-solid fa-images text-3xl text-sky-400 group-hover:text-blue-500 transition-colors animate-bounce" style="animation-duration: 2.5s"></i>
+                                    <span class="block text-sm font-black text-blue-600">사진 여러 장 업로드하기 (클릭)</span>
+                                    <span class="block text-xs text-blue-900/60 font-bold">모든 이미지 파일 업로드 무제한 지원</span>
+                                </div>
+                                <!-- Image Previews overlay container -->
+                                <div id="preview-container" class="hidden w-full max-h-56 overflow-y-auto p-1 rounded-2xl border-2 border-sky-100 bg-slate-50/50">
+                                    <!-- Dynamic layout grid will render here via JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label for="input-situation" class="block font-black text-blue-950 text-sm mb-1">어떤 상황이 일어났나요? (사건의 구체 맥락)</label>
+                                <textarea id="input-situation" rows="3" class="w-full px-4 py-2.5 rounded-2xl border-2 border-sky-100 focus:ring-4 focus:ring-sky-400/20 focus:border-sky-400 outline-none transition-all resize-none text-blue-950 text-xs font-medium" placeholder="상황 선택 창에서 선택하시거나, 여기에 상세한 상황을 직접 자유롭게 작성해 보세요."></textarea>
+                            </div>
+
+                            <div>
+                                <label for="input-expression" class="block font-black text-blue-950 text-sm mb-1">친구에게 실제 보낸 표현이나 이모티콘은?</label>
+                                <input type="text" id="input-expression" class="w-full px-4 py-2.5 rounded-2xl border-2 border-sky-100 focus:ring-4 focus:ring-sky-400/20 focus:border-sky-400 outline-none transition-all text-blue-950 text-xs font-medium" placeholder="예: ㅋㅋㅋ 바쁜가 보네 이따 얘기해! 👍"></input>
+                            </div>
+
+                            <div>
+                                <label for="input-real-feeling" class="block font-black text-blue-950 text-sm mb-1">표현 아래에 꽁꽁 숨긴 내 진짜 감정은?</label>
+                                <textarea id="input-real-feeling" rows="2" class="w-full px-4 py-2.5 rounded-2xl border-2 border-sky-100 focus:ring-4 focus:ring-sky-400/20 focus:border-sky-400 outline-none transition-all resize-none text-blue-950 text-xs font-medium" placeholder="예: 단톡방에선 활발하게 놀면서 내 갠톡만 씹으니까 소외감 느껴지고 섭섭해. 쿨한 척하느라 엄청 애썼어."></textarea>
+                            </div>
+                        </div>
+
+                        <button onclick="runAiAnalysis()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-3.5 px-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg text-lg">
+                            <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i> AI 오해 분석 및 일러스트 생성 시작
+                        </button>
+                    </div>
+
+                    <!-- Right Result Output Panel -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <!-- Default placeholder -->
+                        <div id="ai-placeholder" class="bg-white rounded-[30px] p-8 border-3 border-dashed border-sky-200 text-center flex flex-col justify-center items-center min-h-[440px]">
+                            <div class="w-16 h-16 bg-sky-50 rounded-full flex items-center justify-center text-3xl mb-4 text-sky-400 shadow-inner">
+                                <i class="fa-solid fa-face-kiss-wink-heart animate-bounce" style="animation-duration: 3s"></i>
+                            </div>
+                            <h4 class="font-black text-blue-950 text-lg mb-1">두근두근 분석 대기 중</h4>
+                            <p class="text-blue-900/60 text-xs max-w-sm leading-relaxed font-bold">상황 선택 혹은 직접 입력 후, 실제 보낸 표현과 숨긴 마음을 성실히 쓰고 번역기 분석 단추를 꾹 눌러주세요. 이미지 첨부 시 제한 없이 사진 속의 구체적인 상황까지 함께 해독해 줍니다!</p>
+                        </div>
+
+                        <!-- Loading screen -->
+                        <div id="ai-loading" class="bg-white rounded-[30px] p-6 border-4 border-sky-100 text-center flex flex-col justify-center items-center min-h-[440px] hidden">
+                            <div class="relative w-20 h-20 mb-4 animate-spin">
+                                <div class="absolute inset-0 rounded-full border-4 border-sky-50"></div>
+                                <div class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                            </div>
+                            <h4 class="font-black text-blue-950 text-lg mb-1">우리 마음에 파도 정렬 중...</h4>
+                            <p class="text-sky-600 font-bold text-sm max-w-sm" id="loading-text">Gemini가 다중 업로드된 이미지와 겉과 속의 감정 실타래를 푸는 중...</p>
+                        </div>
+
+                        <!-- Result Section -->
+                        <div id="ai-result" class="bg-white rounded-[30px] p-5 sm:p-6 shadow-md border-4 border-sky-100 min-h-[440px] hidden space-y-4">
+                            <div class="flex justify-between items-center border-b-2 border-dashed border-sky-100 pb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-sky-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
+                                        <i class="fa-solid fa-comments"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black text-blue-950 text-lg">마음 불일치 정밀 번역 결과</h3>
+                                    </div>
+                                </div>
+                                <button onclick="resetAiTranslator()" class="text-xs font-black text-blue-600 hover:text-blue-800 bg-sky-50 hover:bg-sky-100 px-3.5 py-1.5 rounded-xl transition-colors">
+                                    다시 번역하기 🎈
+                                </button>
+                            </div>
+
+                            <!-- Imagen Output visualization -->
+                            <div class="bg-sky-50/30 rounded-2xl p-4 border-2 border-sky-100">
+                                <h4 class="text-xs font-black text-blue-600 uppercase tracking-wider mb-2 flex justify-between items-center">
+                                    <span>🎨 마음의 주파수를 빚어낸 감정 예술화 카드 (AI 일러스트)</span>
+                                </h4>
+                                <div class="relative w-full aspect-[16/9] bg-sky-50/50 rounded-xl overflow-hidden flex items-center justify-center shadow-inner border-2 border-sky-100" id="generated-image-container">
+                                    <div id="image-loading-overlay" class="absolute inset-0 bg-blue-950/40 backdrop-blur-sm flex flex-col justify-center items-center text-white p-4">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent mb-2"></div>
+                                        <p class="text-xs font-black">우리의 감정선을 캔버스 예술로 구워내는 중...</p>
+                                    </div>
+                                    <img id="generated-image" class="w-full h-full object-cover hidden" alt="Emotion visualization" onerror="handleImageError()">
+                                </div>
+                            </div>
+
+                            <!-- Structured Text Results with emojis -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                <div class="bg-blue-50/40 p-4 rounded-2xl border-2 border-blue-100">
+                                    <h5 class="font-black text-blue-950 text-sm mb-1.5 flex items-center gap-1.5">
+                                        <span class="text-lg">📢</span> 겉과 속이 어긋나버린 심리 원인
+                                    </h5>
+                                    <p class="text-blue-900 leading-relaxed text-[11px] sm:text-xs font-medium" id="res-gap-analysis"></p>
+                                </div>
+
+                                <div class="bg-sky-50/40 p-4 rounded-2xl border-2 border-sky-100">
+                                    <h5 class="font-black text-sky-950 text-sm mb-1.5 flex items-center gap-1.5">
+                                        <span class="text-lg">⚠️</span> 상대방이 착각하게 된 가벼운 오해
+                                    </h5>
+                                    <p class="text-blue-900 leading-relaxed text-[11px] sm:text-xs font-medium" id="res-misunderstanding"></p>
+                                </div>
+                            </div>
+
+                            <!-- Speech scripts -->
+                            <div class="bg-sky-50/20 p-4 rounded-2xl border-2 border-sky-100 text-xs">
+                                <h5 class="font-black text-blue-950 text-sm mb-2 flex items-center gap-1.5">
+                                    <span class="text-lg">💡</span> 소중한 관계를 지키는 1:1 진솔한 대화법
+                                </h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div class="bg-white p-3 rounded-xl border border-sky-100 shadow-sm">
+                                        <p class="font-black text-blue-600 text-[11px] mb-1.5">내가 상처 덜 받고 명쾌하게 말하기</p>
+                                        <p class="text-blue-900 text-[11px] sm:text-xs leading-relaxed font-medium" id="res-my-script"></p>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-xl border border-sky-100 shadow-sm">
+                                        <p class="font-black text-sky-600 text-[11px] mb-1.5">상대가 내 진짜 의도를 푸는 힌트</p>
+                                        <p class="text-blue-900 text-[11px] sm:text-xs leading-relaxed font-medium" id="res-friend-script"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let activeTab = 'dictionary';
+        // Array holding the multiple attached images
+        let attachedImages = [];
+
+        // Rich Emotional Databank loaded with 100% of user-provided specific scenarios
+        const categoriesData = {
+            'happy-joy': {
+                category: '행복,기쁨 😊',
+                title: '행복,기쁨',
+                icon: '😊',
+                colorClass: 'text-amber-500',
+                bgClass: 'bg-amber-50',
+                flowReal: '😆',
+                flowFake: '😊',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>🎉</span> 행복·기쁨 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-amber-50/50 rounded-2xl border border-amber-100">
+                                <span class="font-extrabold text-amber-600 block mb-1 text-xs">⭐ 기쁨·행복의 적극적 발현</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🎁 선물 받을 때 / 선물 할 때:</strong> 감사와 정성이 통할 때</li>
+                                    <li><strong>🎂 생일·파티일 때:</strong> 축하 속에 기운이 솟아날 때</li>
+                                    <li><strong>🍕 맛있는 것 먹을 때:</strong> 사소한 음식 하나에 소소히 기쁠 때</li>
+                                    <li><strong>🎒 학원 끝날 때 / 퇴근할 때:</strong> 지긋지긋한 구속에서 해방될 때</li>
+                                    <li><strong>📝 시험 보고 난 후:</strong> 홀가분하게 한시름을 놓을 때</li>
+                                    <li><strong>🌟 아이돌 관련된 것 볼 때:</strong> 최애 덕질로 에너지가 충전될 때</li>
+                                    <li><strong>🏠 집에서 쉴 때:</strong> 가장 편한 무방비 상태로 평온할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-sky-50/40 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 대화 예절과 어색함 중화</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🤝 어색한 사이일 때:</strong> 침묵이나 정적을 둥글게 허물 때</li>
+                                    <li><strong>❄️ 딱딱하게 볼 것 같을 때:</strong> 차가워 보이지 않게 감정을 넣고플 때</li>
+                                    <li><strong>💬 대화가 밋밋 / 할 말 없을 때:</strong> 말문이 턱 막힐 때 흘리는 리액션</li>
+                                    <li><strong>🤐 대답할 때 / 고개 끄덕일 때:</strong> 예의 있고 기분 좋게 긍정할 때</li>
+                                    <li><strong>⏰ 친구와 약속 잡고 난 후:</strong> 조율 성사에 대한 안도와 기대감 표현</li>
+                                    <li><strong>🧸 귀여워 보이고 싶을 때:</strong> 사랑스러운 이미지로 호감을 줄 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100">
+                                <span class="font-extrabold text-emerald-600 block mb-1 text-xs">⭐ 친밀한 교감 및 긍정적 지향</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😜 친구랑 연락 / 대화할 때:</strong> 마음이 가장 편안히 맞물리는 순간</li>
+                                    <li><strong>✨ 친구랑 장난칠 때:</strong> 가벼운 위트와 유머로 호흡을 맞출 때</li>
+                                    <li><strong>💕 사랑한다고 말하고 싶을 때:</strong> 소중한 이들에게 따뜻함을 전할 때</li>
+                                    <li><strong>🥺 보고 싶을 때 / 그리울 때:</strong> 친밀감을 무작정 전하고 싶을 때</li>
+                                    <li><strong>👩‍❤️‍👨 연인과 연락할 때:</strong> 정성 깃든 다정한 사랑의 밀어를 보낼 때</li>
+                                    <li><strong>💡 감정을 강조 / 웃길 때:</strong> 문장의 온도를 생생하게 드높일 때</li>
+                                    <li><strong>👋 대화가 끝날 때:</strong> 웃는 낯으로 기분 좋게 퇴장할 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-blue-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">이모티콘 😊는 단순히 "지금 기분이 날아갈 것 같다"는 단차원적 기쁨을 넘어, <strong>'내가 상대에게 이토록 열려 있고, 우리의 소통이 무척 소중하며, 상대를 어색하게 만들지 않으려는 섬세하고 부드러운 배려'</strong>가 정성스럽게 깃든 마음의 완충 장치입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "오늘 드디어 해야 할 일을 마치고 쉴 수 있어서 너무 후련해! 😆 너랑 연락 나누니까 신남이 더 배가 되는 것 같아. 얼른 조만간 얼굴 보자!"
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            상대가 어색한 침묵을 피하려고, 혹은 대화가 끊길까 걱정되어 붙인 😊를 그저 의미 없는 영혼 가출 리액션으로 넘기지 말고, 관계를 윤택하게 만들려는 고마운 호감 표시로 받아들여 주세요.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">단순히 웃음 기호만 늘어놓으면 기계적인 습관성 답변처럼 보이기 쉽지만, <strong>"지금 퇴근해서 편하게 쉬고 있는데 너랑 톡해서 기쁘다"처럼 나의 주관적인 소소한 해방감을 함께 적어 전달할 때</strong>, 상대는 가식이 전혀 없는 진짜 정을 확인하게 되어 자아 방어벽을 풀고 한껏 더 긴밀하게 다정히 안겨 오게 됩니다.</p>
+                        </div>
+                    </div>`
+            },
+            'love': {
+                category: '사랑 ❤️',
+                title: '사랑',
+                icon: '❤️',
+                colorClass: 'text-rose-500',
+                bgClass: 'bg-rose-50',
+                flowReal: '🥺',
+                flowFake: '❤️',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>❤️</span> 사랑 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-rose-50/50 rounded-2xl border border-rose-100">
+                                <span class="font-extrabold text-rose-600 block mb-1 text-xs">⭐ 소중한 가족 간의 결속</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>👨‍👩‍👧‍👦 부모님과 연락 할 때:</strong> 퉁명스런 일상을 부드럽게 지워내며 늘 변함없는 사랑을 전하고 싶을 때</li>
+                                    <li><strong>🏠 가족 카톡방에서 연락할 때:</strong> 잔소리를 들을 때도 미안함과 고마움을 에둘러 전할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-sky-50/40 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 연인 사이의 가장 설레는 기류</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>👩‍❤️‍👨 연인과 연락 할 때:</strong> 보고 싶은 속내를 투명하게 수놓고 다정한 울타리를 이루고 싶을 때</li>
+                                    <li><strong>💕 사랑을 표현하고 싶을 때:</strong> 고마움과 소중함을 세상에 둘도 없는 언어로 부각할 때</li>
+                                    <li><strong>🥺 그리움을 강조할 때:</strong> 서툴게 칭얼대며 더 끈끈히 닿아 있기를 소망할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100">
+                                <span class="font-extrabold text-emerald-600 block mb-1 text-xs">⭐ 든든한 평생 친구들과 함께</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🤝 친구랑 있을 때:</strong> 표현은 못 해도 우리 우정이 진심임을 살포시 귀띔하고플 때</li>
+                                    <li><strong>🎁 고마운 장난에 반응할 때:</strong> 든든하고 신뢰 가득한 내면의 지지를 위트 있게 녹여낼 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-rose-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">사랑의 하트 ❤️는 단순히 의례적인 인사를 넘어, <strong>'내가 가장 연약하고 지친 순간에 기댈 수 있는 소중한 존재인 당신을 절실히 필요로 하고 챙기겠다는 절실한 무언의 포옹 고백'</strong>입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "부모님(혹은 자기야/A야)! 평소 바쁘다는 핑계로 표현을 아꼈는데, 나에게 항상 버팀목이 돼 주어서 정말 큰 안정을 느껴요. 항상 고맙고 아주 많이 아껴요! ❤️"
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            상대가 다짜고짜 건네는 수줍은 하트와 챙김 기호에 대해 "갑자기 웬 오글거리는 소리냐"며 멋쩍어 피하지 마시고, <strong>그가 애정을 꺼내기 위해 조심스럽게 방어 기제를 풀었음</strong>을 알고 든든한 맞포옹으로 화답해 주세요.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">막연히 메마른 글자로만 '사랑해'를 표현하기보다, <strong>내가 느끼는 감사함과 고마운 구체적 순간("친구가 곁에 있어 줘서 든든하다", "부모님 목소리에 안정이 된다")을 붙여 말할 때</strong>, 말의 밀도가 가슴 깊이 파고들어 상대방에게 '내가 가치 있는 사람이구나' 하는 심리학적 안정감을 충만히 선물하게 되어 오해가 들어설 여지가 원천 봉쇄됩니다.</p>
+                        </div>
+                    </div>`
+            },
+            'sadness': {
+                category: '슬픔 😢',
+                title: '슬픔',
+                icon: '😢',
+                colorClass: 'text-sky-600',
+                bgClass: 'bg-sky-50',
+                flowReal: '😡',
+                flowFake: '😢',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>😢</span> 슬픔 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-sky-50/50 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 순수하게 힘들고 우울한 순간</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😢 실제로 슬플 때:</strong> 속상한 심경이나 서글픈 감정에 온전히 젖을 때</li>
+                                    <li><strong>📝 시험 망쳤을 때:</strong> 노력한 결과가 나오지 않아 절망스럽고 서운할 때</li>
+                                    <li><strong>🔋 힘들 때 / 우울할 때:</strong> 일상이나 인간관계에 치여 기운이 하나도 없을 때</li>
+                                    <li><strong>🌪️ 부정적인 상황일 때:</strong> 계획에 없던 나쁜 소식을 마주하여 기분이 무거울 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-amber-50/40 rounded-2xl border border-amber-100">
+                                <span class="font-extrabold text-amber-600 block mb-1 text-xs">⭐ 미안함 표현 & 정중한 사과</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🙇 사과할 때 / 미안할 때:</strong> 상대에게 잘못을 저지르고 속상하고 송구스러움을 전할 때</li>
+                                    <li><strong>🤝 심각하지 않은 상황 사과:</strong> 너무 무겁지 않게 애교 섞인 귀여운 사과로 분위기를 정돈할 때</li>
+                                    <li><strong>🥺 친구가 보고 싶을 때:</strong> 그리움을 칭얼대며 부드럽게 안기고픈 마음을 전할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-red-50/40 rounded-2xl border border-red-100">
+                                <span class="font-extrabold text-red-600 block mb-1 text-xs">⭐ 감정 강조 및 억울함/짜증 우회</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🔥 화날 때:</strong> 상대 탓에 짜증 나지만 속좁아 보일까 봐 슬픔으로 포장할 때</li>
+                                    <li><strong>💔 친구가 장난 거부할 때:</strong> 친구가 내 농담을 튕기거나 지지해주지 않아 무안하고 섭섭할 때</li>
+                                    <li><strong>💡 기분 표현 / 감정 강조용:</strong> 딱딱한 텍스트 대신 내 속상함의 깊이를 적극적으로 강조할 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-sky-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">슬픔 이모티콘은 단순한 울적함을 표현하는 걸 넘어, <strong>'미안한 마음을 살갑고 둥글게 비치도록 완충하는 대화 안전핀'</strong> 역할을 하거나, 떡볶이 사건처럼 <strong>'상대방에 대한 분노, 짜증, 억울함을 겉으로 직접 부딪치면 모나 보일까 봐 서툰 방어 자아를 거치며 눈물 뒤에 속마음을 억제한 대표적 왜곡 메시지'</strong>입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "A야!! ㅠㅠ 네가 쳐서 아끼는 내 흰 바지에 국물이 다 튀었어. 순간 너무 억울하고 엄청 짜증나서 기절하는 줄 알았잖아 😭 이따 사과하고 커피 쏘면 봐줄게!"
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            상대가 흘리는 단순한 눈물 이모티콘이 나와 얽힌 사건(내 실수 등) 때문이라면, 이는 슬픈 일이 아니라 <strong>"나에 대한 극심한 억울함과 속상함"</strong>을 꾹 누르고 에둘러 울음으로 포장한 억제적 신호입니다.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">😢만 보내면 상대방은 '그냥 피해 때문에 슬프구나, 얼른 닦아봐' 하는 등 <strong>남 일인 양 가벼운 조언</strong>만 늘어놓아 나에게 더 큰 소외감과 섭섭함을 줍니다. 그러나 내 <strong>억울함과 짜증을 명쾌하게, 하지만 장난기를 섞어 타겟을 찍어</strong> 말해주면 상대는 비로소 '자신의 과실이 끼친 진짜 영향'을 실감하게 되며, 방어벽을 세우지 않고 납득 가능한 미안함과 정성 가득한 사과를 즉각 건네게 됩니다.</p>
+                        </div>
+                    </div>`
+            },
+            'anger': {
+                category: '분노 😠',
+                title: '분노',
+                icon: '😠',
+                colorClass: 'text-red-600',
+                bgClass: 'bg-red-50',
+                flowReal: '😰',
+                flowFake: '😠',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>😠</span> 분노 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-red-50/50 rounded-2xl border border-red-100">
+                                <span class="font-extrabold text-red-600 block mb-1 text-xs">⭐ 겉으로 폭발하는 순간</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🔥 화날 때:</strong> 상대방의 부당함이나 과실로 마찰이 생겨 울컥할 때</li>
+                                    <li><strong>💔 극도의 억울함:</strong> 내 본래 의도와 달리 상대방이 오해하고 몰아세울 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-sky-50/40 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 자잘한 신경 과부하</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>⚡ 짜증날 때:</strong> 계획이 자꾸 틀어지거나 사소한 방해 요소들로 피로가 극에 달할 때</li>
+                                    <li><strong>🔋 한계치에 다다를 때:</strong> 지친 상태에서 누군가 짓궂게 장난을 쳐 견디기 벅찰 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100">
+                                <span class="font-extrabold text-emerald-600 block mb-1 text-xs">⭐ 내면의 알아달라는 무의적 신호</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😰 불안이 뒤바뀔 때:</strong> 상대방이 밤늦게 연락이 안 되다 드디어 연락이 와서, 안도와 동시에 짜증이 터질 때</li>
+                                    <li><strong>💡 선을 넘지 말라는 무언의 경고:</strong> 모호하게 넘기면 더 큰 갈등이 될까 두려워 일부러 😠를 던져 방어할 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-red-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">분노 😠는 나를 지키고 싶은 강력한 보호색으로, <strong>'사실은 내가 이렇게나 지쳤고 너에게서 존중과 사랑 어린 안심을 돌려받고 싶다'</strong>라는 절박한 자아 보듬기 조력의 외침입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "나 지금 많이 지치고 예민해진 상태라서, 네 작은 한 마디에도 울컥하고 짜증이 차올랐어 😠 조금만 나를 다정하게 보듬어 주면 금방 사그라들 것 같아."
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            상대가 가시 돋친 😠를 발사할 때, 단순한 비난으로 받아쳐 싸우기 전 <strong>그 분노 이면에 숨은 피로와 "나를 좀 안아주고 알아달라"는 외로움의 신호</strong>를 읽어 한 걸음 유연하게 응답해 주세요.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">단순히 화와 짜증을 여과 없이 던지거나 입을 꾹 다무는 침묵 방어는 상대방에게 위협과 적으로서의 적대감만 심어줍니다. 반면 <strong>내가 화나고 짜증이 난 구체적인 맥락(지친 상황, 서운함의 실체)을 이성적이고 차분하게 밝히고 대화할 때</strong>, 상대방은 오기로 맞서 싸우기를 포기하고 즉각 나의 조력자이자 헌신적인 경청자가 되어 상냥한 대안을 앞장서서 제시하게 됩니다.</p>
+                        </div>
+                    </div>`
+            },
+            'fear-frustration': {
+                category: '두려움,좌절 😰',
+                title: '두려움,좌절',
+                icon: '😰',
+                colorClass: 'text-indigo-600',
+                bgClass: 'bg-indigo-50',
+                flowReal: '😭',
+                flowFake: '😰',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>😰</span> 두려움·좌절 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                                <span class="font-extrabold text-indigo-600 block mb-1 text-xs">⭐ 순수한 불안과 좌절의 순간</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😰 진짜 두려울 때:</strong> 예상치 못한 심각하거나 두려운 상황에 대처해야 할 때</li>
+                                    <li><strong>📉 좌절스러울 때:</strong> 마음만큼 잘 풀리지 않아 지치고 눈물이 앞을 가릴 때</li>
+                                    <li><strong>🔋 진짜 힘들 때:</strong> 현실적인 부담이나 고충이 심해 마음이 버거울 때</li>
+                                    <li><strong>⚡ 안 좋은 일이 있을 때:</strong> 나쁜 상황이 일어났을 때 복잡하고 답답한 심정을 기댈 곳이 필요할 때</li>
+                                    <li><strong>📝 시험 본 후:</strong> 공들여 치른 시험 결과가 아쉬워서 마음이 무겁고 겁이 날 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-sky-50/40 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 대화 및 소통 중의 조마조마함</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>💬 대화할 때:</strong> 정적이나 딱딱한 대화 흐름에 소외감이나 거절감이 생길까 우려될 때</li>
+                                    <li><strong>📱 친구와 연락할 때:</strong> 친구의 어조가 차갑거나 연락 끊길까 조심스럽고 걱정스러울 때</li>
+                                    <li><strong>🤐 할 말이 없을 때:</strong> 대답을 이어가고 싶으나 마땅한 화제가 없어 쩔쩔매고 불안할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100">
+                                <span class="font-extrabold text-emerald-600 block mb-1 text-xs">⭐ 감정 표현 및 조심스러운 기류</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🙇 부모님께 부탁할 때:</strong> 거절당하거나 혼날 것 같은 두려움을 참으며 힘겹게 말씀을 꺼낼 때</li>
+                                    <li><strong>🎨 기분표현할 때:</strong> 나의 나약하거나 서운한 상태를 이모티콘으로 애써 정중히 전달할 때</li>
+                                    <li><strong>💡 감정 표현할 때:</strong> 건조한 텍스트로 오해받기 싫어 😰를 동원해 입체적으로 긴장감을 알릴 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-indigo-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">두려움이나 좌절의 이모티콘 😰은 단순히 지레 겁먹은 행동을 뜻하는 것을 넘어, <strong>'부모님이나 친구처럼 소중한 이들에게 버려지거나 외면당할지도 모른다는 거절 불안'</strong>과 <strong>'할 말이 없는 소외 속에서도 예쁜 기분표현과 성실한 연대를 끈기 있게 채우려는 조심스러움'</strong>이 애틋하게 교차한 정밀 방어 신호입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "실은 내가 이번 시험 보고 걱정이 가득 차서 연락할 때 나도 모르게 좀 긴장이 됐었어 😰 혹시 부모님(혹은 친구)께 이거 진지하게 한 번만 기댈 수 있을까?"
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            상대가 대화 중 😰를 붙여 조심스레 도움을 구하거나 할 말이 없다는 듯 쩔쩔맬 때, "왜 그렇게 약한 소리를 하냐"며 지적하지 말고, **"부탁하기 위해 큰 용기를 냈구나"**라는 마음의 온기로 상대를 품어 안아주세요.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">단순히 "두렵다", "좌절스럽다"고 늘 숨어만 다니면 사람들은 나의 속 깊은 고민과 사정을 모른 채 '매사에 무서워하고 의존하기만 하는 무기력한 성향'으로 오해하기 일쑤입니다. 내 <strong>두려움에 깔린 구체적인 상황적 무게(부탁의 간절함, 시험 후의 막막함)를 말풍선으로 정직하게 개봉해 줄 때</strong>, 비로소 상대방도 나의 정중한 의도를 백퍼센트 깨닫고 헌신적으로 다정한 울타리가 되어 다정하게 응답해 줄 것입니다.</p>
+                        </div>
+                    </div>`
+            },
+            'shame': {
+                category: '부끄러움 😳',
+                title: '부끄러움',
+                icon: '😳',
+                colorClass: 'text-emerald-500',
+                bgClass: 'bg-emerald-50',
+                flowReal: '😭',
+                flowFake: '😂',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>😳</span> 부끄러움 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                                <span class="font-extrabold text-emerald-600 block mb-1 text-xs">⭐ 순수하고 귀여운 수줍음과 기쁨</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😳 진짜 수줍고 부끄러울 때:</strong> 쑥스러운 마음이 들거나 감정을 감당하기 어려울 때</li>
+                                    <li><strong>🎁 선물 받았을 때:</strong> 고마운 호의를 넘치게 전해 받아 수줍을 때</li>
+                                    <li><strong>🌟 친구의 칭찬을 받을 때:</strong> 친구의 따뜻한 칭찬에 몸 둘 바 모르게 기쁘고 쑥스러울 때</li>
+                                    <li><strong>🧸 귀여워 보이고 싶을 때:</strong> 사랑스러운 이미지를 은은하게 자아내고 싶을 때</li>
+                                    <li><strong>💕 보고 싶을 때:</strong> 상대를 기다리는 애정을 정중히 나타낼 때</li>
+                                    <li><strong>✨ 기쁠 때:</strong> 기쁜 순간의 미소를 조심스럽고 예쁘게 드러낼 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-sky-50/40 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 어색함 극복 및 정중한 관계 조율</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>🤝 초면인 사람과 대화할 때:</strong> 첫 만남의 긴장을 허물고 상냥하게 다가갈 때</li>
+                                    <li><strong>👋 인사할 때 / 처음 인사할 때:</strong> 딱딱하지 않은 부드럽고 친절한 첫인상을 남기고플 때</li>
+                                    <li><strong>❄️ 대화 분위기가 딱딱할 때:</strong> 차갑고 경직된 흐름에 은은한 훈풍을 불어넣을 때</li>
+                                    <li><strong>📱 어색한 사이와 연락할 때:</strong> 소원하거나 서먹한 분위기를 풀어 가고플 때</li>
+                                    <li><strong>🙇 윗사람과 대화할 때:</strong> 너무 무겁지 않되 예의 바르고 싹싹한 조심성을 알릴 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-amber-50/40 rounded-2xl border border-amber-100">
+                                <span class="font-extrabold text-amber-600 block mb-1 text-xs">⭐ 재치 있는 표현 & 편리한 소통</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😜 킹받는 말투를 사용할 때:</strong> 장난스러운 톤이나 위트 있는 딴죽을 걸고 싶을 때</li>
+                                    <li><strong>⌨️ 타자 치기 귀찮을 때:</strong> 긴 설명 없이 이모티콘 하나로 분위기를 정리할 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-emerald-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">부끄러움 이모티콘 😳은 단순한 수치심을 넘어, <strong>'대화방의 차갑고 서먹서먹한 경계심을 귀엽고 둥글게 완충하며 허물고 싶어 하는 호의적인 노크'</strong>이자, 상대방의 소중한 선물이나 과찬을 겸손하면서도 기분 좋게 머금고 대답하려는 부드러운 교감 신호입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "와! 칭찬 감사해요! 저 진짜 쑥스럽고 부끄러워서 😳 한바퀴 춤추는 줄 알았잖아요. 오늘 주신 선물(혹은 조언) 정말 기쁘고 소중하게 간직할게요!"
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            서먹하거나 윗사람과의 관계에서 상대가 😳를 곁들인다면, 이는 딱딱함을 피하고 최대한 예의 바르고 살갑게 호감을 전달하려는 사랑스러운 예고편임을 읽어주세요.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">어색하거나 쑥스럽다는 이유로 😳 기호만 덩거리 남겨놓거나 침묵해 버리면, 상대방은 '나와 대화하기가 거북하거나 부담스러운가?' 하는 싸늘한 거절을 느껴 마음의 문을 닫아버릴 수 있습니다. 이때 <strong>"쑥스럽고 부끄럽지만 실은 기분 최고"라는 진심의 팩트를 명쾌하게 덧붙여 전해줄 때</strong>, 상대는 나의 참된 호의를 100% 신뢰하게 되며 대화 분위기는 기적처럼 훈훈하고 투명해집니다.</p>
+                        </div>
+                    </div>`
+            },
+            'others': {
+                category: '기타 💬',
+                title: '기타',
+                icon: '💬',
+                colorClass: 'text-slate-500',
+                bgClass: 'bg-slate-50',
+                flowReal: '🥱',
+                flowFake: '👍',
+                analysis: `
+                    <div class="space-y-4">
+                        <p class="font-bold text-blue-950 mb-2 flex items-center gap-1">
+                            <span>💬</span> 기타 이모티콘을 사용하는 구체적인 진짜 상황들
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 bg-slate-100/60 rounded-2xl border border-slate-200">
+                                <span class="font-extrabold text-slate-700 block mb-1 text-xs">⭐ 고마움과 미안함의 예의</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>💖 고마울 때:</strong> 상대의 세심한 호의와 챙김에 따스히 고마움을 전할 때</li>
+                                    <li><strong>🙇 미안할 때:</strong> 약속 시간 지연이나 사소한 미숙함에 양해를 구할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-sky-50/40 rounded-2xl border border-sky-100">
+                                <span class="font-extrabold text-sky-600 block mb-1 text-xs">⭐ 유쾌한 일상의 반전과 유머</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>⚡ 놀랄 때:</strong> 기상천외한 소식이나 돌발적인 반전 사건을 접했을 때</li>
+                                    <li><strong>🤪 웃길 때:</strong> 친구의 엉뚱한 장난이나 유머 소동에 박장대소하며 화답할 때</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100">
+                                <span class="font-extrabold text-emerald-600 block mb-1 text-xs">⭐ 편리하고 담백한 상황 종결</span>
+                                <ul class="list-disc list-inside space-y-1 text-[11px] text-blue-950/90 pl-1 font-medium">
+                                    <li><strong>😴 대화를 서서히 끝낼 때:</strong> 피곤하여 자러 가기 전 따뜻하게 마침표를 찍을 때</li>
+                                    <li><strong>👍 가볍게 격려할 때:</strong> 친구의 노고를 간결하면서 정중히 위로하고 응원할 때</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-xs text-blue-950 leading-relaxed font-bold border-t border-sky-100 pt-3">
+                            <p class="mb-1 text-slate-600 flex items-center gap-1">🧠 속마음의 핵심 비밀</p>
+                            <p class="font-medium text-blue-900/90">기타 💬 카테고리의 반응들은, <strong>'대화방의 매끄러운 평판을 깨끗이 보존하며 나의 경계선을 지키되, 상대에게는 기분 좋은 호감과 리액션을 동시에 전송하려는 섬세한 소통 디자인'</strong>입니다.</p>
+                        </div>
+                    </div>`,
+                guide: `
+                    <div class="space-y-2">
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-blue-600 block mb-0.5">💬 나의 깔끔 소통법:</span>
+                            "오늘 얘기 진짜 알차고 웃겼어 💬 챙겨줘서 진짜 고마운데, 내가 지금 마저 처리해야 할 과제(혹은 취침)가 있어서 먼저 들어가 볼게! 내일 밝을 때 꼭 이어서 재미나게 수다 떨자!"
+                        </div>
+                        <div class="bg-white p-3 rounded-xl text-xs border border-sky-100">
+                            <span class="font-black text-sky-600 block mb-0.5">🤝 친구의 역지사지 경청:</span>
+                            친구가 "진짜 고맙다", "오늘 너무 웃겼다"며 늦은 시간 퇴장을 은은하게 알리는 따뜻한 어조를 취한다면, 감동받아 질질 끌기보다 눈치껏 편안하게 쉬도록 놔줄 줄 알아야 합니다.
+                        </div>
+                        <div class="bg-sky-100/50 p-3 rounded-xl text-xs border-2 border-dashed border-sky-200">
+                            <span class="font-black text-blue-600 block mb-1 text-sm">💡 마음 연결의 비밀 (이 소통법을 써야 하는 구체적인 이유)</span>
+                            <p class="text-blue-950 leading-relaxed text-[11px]">막연하고 뻔한 기타 이모티콘만 덩그러니 남기면 상대방은 '성의 없이 영혼 없이 답장한다'고 서운해하여 점차 소원해질 위험이 있습니다. <strong>고마움이나 기분 좋은 놀라움을 느낀 아주 미세한 포인트("네가 저번에 준 팁 덕분에 엄청 웃었어!", "어제 일은 미안했는데 덕분에 잘 풀렸어")를 짚어 고백할 때</strong>, 상대방은 내가 자신의 마음을 가치 있게 기억해 준다 느끼며 돈독한 지지자로 평생 남게 됩니다.</p>
+                        </div>
+                    </div>`
+            }
+        };
+
+        // Switch Tabs Navigation
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+                btn.classList.add('text-blue-900/60', 'hover:text-blue-600');
+            });
+
+            const activeSection = document.getElementById(`section-${tabId}`);
+            if (activeSection) activeSection.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-blue-900/60', 'hover:text-blue-600');
+                activeBtn.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+            }
+
+            if (tabId !== 'dictionary') {
+                closeEmotionDetail();
+            }
+        }
+
+        function openEmotionCategory(key) {
+            const data = categoriesData[key];
+            if (!data) return;
+
+            const panel = document.getElementById('emotion-detail-panel');
+            panel.classList.remove('hidden');
+
+            const nameEl = document.getElementById('detail-category-name');
+            nameEl.innerText = data.category;
+            nameEl.className = `text-2xl sm:text-3xl font-black mt-1 ${data.colorClass}`;
+
+            document.getElementById('detail-icon').innerHTML = `<span class="animate-pulse" style="display:inline-block">${data.icon}</span>`;
+
+            document.getElementById('flow-real-emoji').innerText = data.flowReal;
+            document.getElementById('flow-fake-emoji').innerText = data.flowFake;
+
+            document.getElementById('analysis-text').innerHTML = data.analysis;
+            document.getElementById('guide-text').innerHTML = data.guide;
+
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 50);
+        }
+
+        function closeEmotionDetail() {
+            document.getElementById('emotion-detail-panel').classList.add('hidden');
+        }
+
+        function showToast(text, iconClass = "fa-circle-check") {
+            const toast = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+            const message = document.getElementById('toast-text');
+
+            icon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            message.innerText = text;
+
+            toast.classList.remove('opacity-0', 'translate-y-20', 'pointer-events-none');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-20', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // Dropdown situation preset handler
+        function onSituationSelectChange(val) {
+            const textarea = document.getElementById('input-situation');
+            if (val === 'custom') {
+                textarea.value = '';
+                textarea.placeholder = "원하시는 갈등 상황을 직접 이곳에 상세하게 작성해 주세요...";
+                textarea.focus();
+            } else {
+                textarea.value = val;
+                showToast("선택하신 대표 상황이 입력창에 자동 적용되었습니다! 📝");
+            }
+        }
+
+        // Handle Image Attachment Selection (No size restrictions, multiple upload supported)
+        function handleImageSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                // Create unique ID for each picture to enable easy individual deletion
+                const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                
+                reader.onload = function(e) {
+                    const base64String = e.target.result.split(',')[1];
+                    attachedImages.push({
+                        id: uniqueId,
+                        base64: base64String,
+                        mime: file.type,
+                        url: e.target.result
+                    });
+                    
+                    // Rerender the previews
+                    renderImages();
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Clear file input value to allow uploading same file repeatedly
+            event.target.value = '';
+            showToast("선택하신 사진들이 무제한 조건으로 완벽하게 추가되었습니다! 📸");
+        }
+
+        // Renders all current attached images in a responsive thumbnail list
+        function renderImages() {
+            const container = document.getElementById('preview-container');
+            const prompt = document.getElementById('upload-prompt');
+
+            if (attachedImages.length === 0) {
+                container.classList.add('hidden');
+                prompt.classList.remove('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            prompt.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            let html = '<div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 w-full p-2">';
+            attachedImages.forEach((img) => {
+                html += `
+                    <div class="relative aspect-square rounded-2xl overflow-hidden border-2 border-sky-100 bg-white group shadow-sm">
+                        <img src="${img.url}" class="w-full h-full object-cover">
+                        <button onclick="removeAttachedImage(event, '${img.id}')" class="absolute top-1 right-1 bg-red-500/90 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] transition-colors shadow-md border border-white" title="사진 삭제">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function removeAttachedImage(event, id) {
+            event.stopPropagation(); // Avoid triggering parent upload container click
+            attachedImages = attachedImages.filter(img => img.id !== id);
+            renderImages();
+            showToast("해당 사진이 목록에서 삭제되었습니다.", "fa-trash-can text-red-300");
+        }
+
+        // Form filling helper presets
+        const presets = {
+            'tteokbokki': {
+                situation: '친구 A가 팔을 부딪쳐서 내가 먹던 떡볶이 국물이 내 소중한 흰 바지에 크게 튀어 붉은 얼룩이 생겼을 때',
+                expression: '아.. 흰 바지에 다 흘렸다 😢 어떡해 진짜 속상해',
+                realFeeling: '네가 치는 바람에 바지 버렸잖아! 진짜 짜증나고 억울해. 왜 밥 먹을 때 조심 안 해? 대놓고 너 때문에 튀었다고 화내면 깐깐하게 구는 쩨쩨한 사람 취급받을까봐 슬픈 척만하면서 꾹 참은 거야.'
+            },
+            'no-reply': {
+                situation: '다른 친구들과의 대화방에서는 활동하면서 정작 내 갠톡에는 하루 종일 답장을 주지 않는 상황',
+                expression: '바쁜 일 있나 보네! 틈날 때 편하게 확인해 줘 👍',
+                realFeeling: '나만 너를 중요하게 생각하는 것 같아 너무 외롭고 섭섭하다. 솔직하게 대놓고 서운하다고 말하면 매달리는 구차한 꼴이 되는 것 같아 쿨한 척 웃음 이모티콘을 보낸 거야.'
+            },
+            'promise-cancel': {
+                situation: '약속 전날 밤이나 만나기 불과 2시간 전에 피곤하다는 핑계로 돌연 전화를 걸어 파투 낸 친구의 행동',
+                expression: 'ㅋㅋㅋ 괜찮아 그럴 수 있지 피곤할 텐데 푹 쉬어 😂',
+                realFeeling: '내 시간과 감정 약속을 대수롭지 않게 함부로 대하는 친구의 태도에 모멸감과 실망이 폭발해. 하지만 약속 파투로 삐졌다는 핀잔을 듣기 싫어서, 허세를 부리듯 크게 웃는 연기로 화를 감추었어.'
+            }
+        };
+
+        async function runAiAnalysis() {
+            const situation = document.getElementById('input-situation').value.trim();
+            const expression = document.getElementById('input-expression').value.trim();
+            const realFeeling = document.getElementById('input-real-feeling').value.trim();
+
+            if (!situation || !expression || !realFeeling) {
+                showToast("세 개의 입력 칸을 모두 성실하게 입력해 주셔야 오해 원인을 해독할 수 있습니다. 🥺", "fa-triangle-exclamation text-blue-400");
+                return;
+            }
+
+            document.getElementById('ai-placeholder').classList.add('hidden');
+            document.getElementById('ai-result').classList.add('hidden');
+            
+            const loadingSec = document.getElementById('ai-loading');
+            loadingSec.classList.remove('hidden');
+
+            const loadingTexts = [
+                "업로드된 복수 이미지들과 대화 상황의 맥락을 분석하는 중...",
+                "감정 이면의 깊은 방어 체계를 정밀 분석하는 중...",
+                "상대방이 범하기 쉬운 오독의 원인을 매핑하는 중...",
+                "어긋난 자아 대조를 위한 1:1 진심 소통 스크립트를 작성 중...",
+                "감정의 미학을 담을 초현실 일러스트 이미지를 그리는 중..."
+            ];
+            
+            let loadIdx = 0;
+            const textTimer = setInterval(() => {
+                loadIdx = (loadIdx + 1) % loadingTexts.length;
+                document.getElementById('loading-text').innerText = loadingTexts[loadIdx];
+            }, 1800);
+
+            try {
+                // Prepare API Payload with Optional Multiple Image Data for Multimodal Support
+                const systemPrompt = `당신은 인간 대화 속 비언어적 뉘앙스와 이모티콘, 속마음의 괴리를 정밀 분석하는 임상 소통학 전문가입니다.
+                사용자의 [갈등 상황], [실제 보낸 겉표현/이모티콘], [진짜 속마음] 데이터들을 면밀히 해부하여 상대방과의 사이에 생긴 대화 불일치를 명확하게 풀고 솔루션을 설계해 주세요.
+                다음 JSON 포맷 약속을 완벽하게 준수하여 다른 수식어구 없이 오로지 순수 JSON만 반환해 주세요:
+
+                {
+                    "gapAnalysis": "겉표현과 실제 숨겨진 감정 간에 불일치가 생긴 깊은 내적/심리적 불일치 원인을 상세하게 설명해 주세요. (한국어로 작성, 문맥상 구체적인 예시 활용)",
+                    "potentialMisunderstanding": "상대방이 내 가짜 슬픔/기쁨 등의 리액션을 있는 그대로 믿음으로써 파생된, 억울하게 범하기 쉬운 오해의 메커니즘을 명확하게 분석해 주세요. (한국어로 작성)",
+                    "myNewScript": "내 자존감이나 상대방의 기분을 다치지 않으면서, 진심과 짜증/억울함을 명확하고 유머러스하게 어필할 수 있는 정식 1:1 카톡/대화 스크립트 가이드를 제공하세요. (한국어로 작성)",
+                    "friendScript": "상대방 입장에서 '그 사람이 그런 이모티콘을 썼던 건 이런 억울함을 완충하려 함이었구나!'라고 머리를 치고 깨달을 수 있는 상대방 시점의 통찰 요약 가이드와 이런 솔루션을 왜 써야 해결되는지 이유를 설명해 주세요. (한국어로 작성)",
+                    "illustrationPrompt": "A conceptual, surreal cute pastel-colored illustration representing the emotional gap described. Minimalist cartoon style, soft clouds, warm light, clear concept metaphor."
+                }`;
+
+                const userPrompt = `
+                [갈등 상황]: ${situation}
+                [실제 보낸 겉표현/이모티콘]: ${expression}
+                [진짜 속마음]: ${realFeeling}
+                
+                ${attachedImages.length > 0 ? `추가 단서: 첨부된 총 ${attachedImages.length}장의 갈등방 대화 기록 이미지들을 모두 참고하여 사진 안의 구체적 맥락과 텍스트를 감안한 초정밀 오해 분석을 수행해 주세요.` : ""}
+                `;
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash:generateContent?key=${apiKey}`;
+
+                let parts = [{ text: userPrompt }];
+                
+                // Add all attached multiple images as inline data parameters
+                attachedImages.forEach(img => {
+                    parts.push({
+                        inlineData: {
+                            mimeType: img.mime,
+                            data: img.base64
+                        }
+                    });
+                });
+
+                const payload = {
+                    contents: [{ role: "user", parts: parts }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                gapAnalysis: { type: "STRING" },
+                                potentialMisunderstanding: { type: "STRING" },
+                                myNewScript: { type: "STRING" },
+                                friendScript: { type: "STRING" },
+                                illustrationPrompt: { type: "STRING" }
+                            },
+                            required: ["gapAnalysis", "potentialMisunderstanding", "myNewScript", "friendScript", "illustrationPrompt"]
+                        }
+                    },
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("API call failed");
+
+                const result = await response.json();
+                clearInterval(textTimer);
+
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) throw new Error("Empty Response");
+
+                const parsedData = JSON.parse(jsonText);
+
+                // Inject results directly
+                document.getElementById('res-gap-analysis').innerHTML = parsedData.gapAnalysis;
+                document.getElementById('res-misunderstanding').innerHTML = parsedData.potentialMisunderstanding;
+                document.getElementById('res-my-script').innerHTML = parsedData.myNewScript;
+                document.getElementById('res-friend-script').innerHTML = parsedData.friendScript;
+
+                loadingSec.classList.add('hidden');
+                document.getElementById('ai-result').classList.remove('hidden');
+
+                // Trigger Imagen vector generation in parallel
+                generateIllustration(parsedData.illustrationPrompt);
+
+            } catch (error) {
+                console.error("Analysis Error:", error);
+                clearInterval(textTimer);
+                loadingSec.classList.add('hidden');
+                document.getElementById('ai-placeholder').classList.remove('hidden');
+                showToast("인터넷 환경 불안정으로 분석에 실패했습니다. 🥺", "fa-circle-exclamation text-red-400");
+            }
+        }
+
+        // Image generation via Imagen 4
+        async function generateIllustration(imagePrompt) {
+            const overlay = document.getElementById('image-loading-overlay');
+            const imgEl = document.getElementById('generated-image');
+            
+            overlay.classList.remove('hidden');
+            imgEl.classList.add('hidden');
+
+            const enhancedPrompt = `${imagePrompt}, cute 3d clay style illustration, soft clean pastel color, bubbly conceptual art vector style, minimalist soft glow`;
+
+            try {
+                const payload = {
+                    instances: { prompt: enhancedPrompt },
+                    parameters: { "sampleCount": 1 }
+                };
+                
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Image Generation failed");
+
+                const result = await response.json();
+                const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
+
+                if (base64Data) {
+                    imgEl.src = `data:image/png;base64,${base64Data}`;
+                    imgEl.onload = () => {
+                        overlay.classList.add('hidden');
+                        imgEl.classList.remove('hidden');
+                    };
+                } else {
+                    throw new Error("No bytes returned");
+                }
+
+            } catch (e) {
+                console.error("Illustration Error:", e);
+                handleImageError();
+            }
+        }
+
+        function handleImageError() {
+            const overlay = document.getElementById('image-loading-overlay');
+            const imgEl = document.getElementById('generated-image');
+            overlay.classList.add('hidden');
+            // Safe fallback image
+            imgEl.src = "https://placehold.co/800x450/e0f2fe/172554?text=Warm+Blue+Heart+Connections+🎨";
+            imgEl.classList.remove('hidden');
+        }
+
+        function resetAiTranslator() {
+            document.getElementById('ai-result').classList.add('hidden');
+            document.getElementById('ai-placeholder').classList.remove('hidden');
+            
+            // Clean inputs & attachments
+            document.getElementById('situation-select').value = 'custom';
+            document.getElementById('input-situation').value = '';
+            document.getElementById('input-expression').value = '';
+            document.getElementById('input-real-feeling').value = '';
+            document.getElementById('image-upload').value = '';
+            
+            attachedImages = [];
+            renderImages();
+            
+            showToast("입력창이 깨끗하게 청소되었어요! 🧹", "fa-arrow-rotate-left text-sky-400");
+        }
+
+        // Initialize state on window loaded
+        window.onload = function() {
+            // Automatically showcase the prime concrete example: "happy-joy" category showing the comprehensive new user scenarios
+            setTimeout(() => {
+                openEmotionCategory('happy-joy');
+            }, 300);
+        };
+    </script>
+</body>
+</html>
